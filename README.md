@@ -12,7 +12,11 @@ A production-grade, highly cost-optimized, and **ephemeral** microservices deplo
 
 ### 🌐 Live Project Showcase & Architecture Explorer
 > 🚀 **Explore the Interactive Product Showcase**:  
-> Open [`docs/index.html`](docs/index.html) in your browser (or visit the GitHub Pages link) to experience the **Interactive Topology Inspector**, **Real-Time Traffic Simulator**, and **Cloud Cost Calculator**!
+> Visit the live GitHub Pages link: [**Live Architecture Explorer**](https://mohanabhishek29.github.io/k8s-eks-terraform-deployment/) to experience the **Interactive Topology Inspector**, **Real-Time Traffic Simulator**, and **Cloud Cost Calculator**!
+
+### 📄 Official Architecture & Verification Report
+> 📥 **Download Full Project Report**:  
+> View the complete 19-screenshot AWS verification catalog and engineering documentation: [**Project Official Document.pdf**](Project%20Official%20Document.pdf)
 
 ---
 
