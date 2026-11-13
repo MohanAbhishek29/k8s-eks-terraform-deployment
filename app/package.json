@@ -1,0 +1,22 @@
+{
+  "name": "ephemeral-microservices-api",
+  "version": "1.0.0",
+  "description": "Ephemeral Node.js REST API for AWS EKS Microservices Architecture",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  },
+  "keywords": [
+    "eks",
+    "kubernetes",
+    "microservices",
+    "ephemeral",
+    "aws"
+  ],
+  "author": "Cloud & DevOps Portfolio",
+  "license": "MIT"
+}

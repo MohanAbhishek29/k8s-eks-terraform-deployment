@@ -1,0 +1,8 @@
+# Copy this file to terraform.tfvars to override default values:
+aws_region          = "us-east-1"
+cluster_name        = "ephemeral-eks-cluster"
+kubernetes_version  = "1.30"
+node_instance_types = ["t3.small"]
+desired_nodes       = 2
+owner               = "DevOps-Engineer"
+

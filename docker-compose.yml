@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  ephemeral-api-1:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    container_name: ephemeral-api-1
+    environment:
+      - PORT=3000
+      - NODE_ENV=development
+    ports:
+      - "3000:3000"
+
+  ephemeral-api-2:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    container_name: ephemeral-api-2
+    environment:
+      - PORT=3000
+      - NODE_ENV=development
+    ports:
+      - "3001:3000"
+

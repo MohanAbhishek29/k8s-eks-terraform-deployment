@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AWS EKS Ephemeral Microservices Architecture | Enterprise Showcase</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #030712;
+      --bg-card: rgba(15, 23, 42, 0.75);
+      --bg-card-hover: rgba(30, 41, 59, 0.85);
+      --border-card: rgba(255, 255, 255, 0.1);
+      --border-glow: rgba(56, 189, 248, 0.4);
+      --cyan: #38bdf8;
+      --cyan-glow: rgba(56, 189, 248, 0.25);
+      --purple: #a855f7;
+      --purple-glow: rgba(168, 85, 247, 0.25);
+      --emerald: #10b981;
+      --rose: #f43f5e;
+      --amber: #f59e0b;
+      --text-main: #f9fafb;
+      --text-muted: #94a3b8;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+      line-height: 1.6;
+      background-image: 
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(120, 119, 198, 0.18), transparent 70%),
+        radial-gradient(circle at 20% 80%, rgba(56, 189, 248, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 80% 20%, rgba(168, 85, 247, 0.08) 0%, transparent 40%);
+    }
+
+    /* Grid Overlay */
+    .bg-grid {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background-size: 40px 40px;
+      background-image: linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                        linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Top Glass Navbar */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(3, 7, 18, 0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border-card);
+      padding: 16px 32px;
+    }
+    .nav-container {
+      max-width: 1300px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .logo-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      font-size: 19px;
+      letter-spacing: -0.02em;
+    }
+    .logo-badge {
+      background: linear-gradient(135deg, #0284c7, #9333ea);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 15px;
+      box-shadow: 0 0 20px rgba(147, 51, 234, 0.5);
+    }
+    .nav-menu {
+      display: flex;
+      gap: 28px;
+      list-style: none;
+    }
+    .nav-menu a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    .nav-menu a:hover {
+      color: var(--cyan);
+      text-shadow: 0 0 10px var(--cyan-glow);
+    }
+    .cluster-status-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 6px 14px;
+      border-radius: 9999px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--emerald);
+    }
+    .pulsing-circle {
+      width: 8px; height: 8px;
+      background: var(--emerald);
+      border-radius: 50%;
+      box-shadow: 0 0 12px var(--emerald);
+      animation: pulseAnim 2s infinite;
+    }
+    @keyframes pulseAnim {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.4); opacity: 0.6; }
+    }
+
+    /* Content Wrapper */
+    .wrapper {
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: 0 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Hero Section */
+    .hero-section {
+      padding: 80px 0 60px;
+      text-align: center;
+    }
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 18px;
+      background: rgba(56, 189, 248, 0.08);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: 9999px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--cyan);
+      margin-bottom: 24px;
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.15);
+    }
+    .hero-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(40px, 6vw, 72px);
+      font-weight: 800;
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+      margin-bottom: 24px;
+    }
+    .neon-text {
+      background: linear-gradient(135deg, #ffffff 20%, #38bdf8 60%, #c084fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 40px rgba(56, 189, 248, 0.2);
+    }
+    .hero-desc {
+      max-width: 780px;
+      margin: 0 auto 36px;
+      color: var(--text-muted);
+      font-size: 19px;
+      font-weight: 400;
+      line-height: 1.6;
+    }
+    .hero-cta {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      padding: 14px 28px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      border: none;
+    }
+    .btn-glow {
+      background: linear-gradient(135deg, #0284c7, #7c3aed);
+      color: white;
+      box-shadow: 0 0 30px rgba(124, 58, 237, 0.45);
+    }
+    .btn-glow:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 45px rgba(56, 189, 248, 0.6);
+    }
+    .btn-glass {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-card);
+      color: var(--text-main);
+    }
+    .btn-glass:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Stat Cards */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
+      margin: 60px 0 80px;
+    }
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: 18px;
+      padding: 26px;
+      backdrop-filter: blur(16px);
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .stat-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--border-glow);
+      background: var(--bg-card-hover);
+    }
+    .stat-card:hover::before { opacity: 1; }
+    .stat-number {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 38px;
+      font-weight: 800;
+      color: var(--cyan);
+      letter-spacing: -0.02em;
+    }
+    .stat-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin: 6px 0 2px;
+      color: var(--text-main);
+    }
+    .stat-sub {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    /* Core Card Sections */
+    .showcase-block {
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: 24px;
+      padding: 40px;
+      margin-bottom: 60px;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+    .block-header {
+      margin-bottom: 32px;
+    }
+    .block-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--purple);
+      margin-bottom: 8px;
+      display: inline-block;
+    }
+    .block-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 30px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .block-desc {
+      color: var(--text-muted);
+      font-size: 15px;
+      margin-top: 6px;
+    }
+
+    /* Architecture Visual Diagram */
+    .arch-canvas {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      background: rgba(3, 7, 18, 0.7);
+      border: 1px solid var(--border-card);
+      border-radius: 18px;
+      padding: 36px;
+    }
+    .arch-layer {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .arch-node {
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 14px;
+      padding: 20px 24px;
+      min-width: 240px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      position: relative;
+    }
+    .arch-node:hover, .arch-node.active-node {
+      border-color: var(--cyan);
+      box-shadow: 0 0 30px rgba(56, 189, 248, 0.3);
+      transform: translateY(-2px);
+      background: rgba(30, 41, 59, 0.95);
+    }
+    .arch-node-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 15px;
+    }
+    .arch-node-meta {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+    .arrow-flow {
+      text-align: center;
+      color: var(--cyan);
+      font-size: 20px;
+      opacity: 0.7;
+    }
+
+    /* Node Inspector */
+    .inspector-panel {
+      margin-top: 24px;
+      background: rgba(10, 15, 30, 0.95);
+      border: 1px solid var(--cyan-glow);
+      border-radius: 16px;
+      padding: 24px;
+      display: flex;
+      gap: 24px;
+      align-items: center;
+    }
+    .inspector-badge {
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      color: var(--cyan);
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      font-size: 13px;
+    }
+    .inspector-info h4 {
+      font-size: 17px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .inspector-info p {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    /* Traffic Simulator UI */
+    .sim-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      gap: 32px;
+      align-items: center;
+    }
+    @media (max-width: 900px) {
+      .sim-grid { grid-template-columns: 1fr; }
+    }
+    .sim-arena {
+      background: rgba(3, 7, 18, 0.8);
+      border: 1px solid var(--border-card);
+      border-radius: 18px;
+      padding: 28px;
+    }
+    .sim-pods-container {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+    .sim-pod-card {
+      flex: 1;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid var(--border-card);
+      border-radius: 14px;
+      padding: 20px;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+    .sim-pod-card.flash-active {
+      border-color: var(--emerald);
+      box-shadow: 0 0 25px rgba(16, 185, 129, 0.5);
+      background: rgba(16, 185, 129, 0.12);
+    }
+    .sim-pod-id {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .sim-counter {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 36px;
+      font-weight: 800;
+      color: var(--cyan);
+      margin: 8px 0;
+    }
+    .sim-terminal-log {
+      background: #000;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      height: 90px;
+      overflow-y: auto;
+      color: #38bdf8;
+    }
+
+    /* Cost Calculator */
+    .calc-slider {
+      width: 100%;
+      height: 10px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      outline: none;
+      margin: 24px 0 16px;
+      accent-color: var(--purple);
+    }
+    .calc-matrix {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-top: 24px;
+    }
+    .calc-card {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border-card);
+      border-radius: 16px;
+      padding: 24px;
+    }
+    .calc-card.highlight-savings {
+      border-color: rgba(16, 185, 129, 0.4);
+      background: rgba(16, 185, 129, 0.08);
+      box-shadow: 0 0 30px rgba(16, 185, 129, 0.15);
+    }
+    .calc-amount {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 34px;
+      font-weight: 800;
+      margin-top: 8px;
+    }
+
+    /* Terminal & Code Box */
+    .cli-box {
+      background: #090d16;
+      border: 1px solid #1f2937;
+      border-radius: 16px;
+      overflow: hidden;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .cli-top {
+      background: #111827;
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #1f2937;
+    }
+    .dots { display: flex; gap: 8px; }
+    .dot-item { width: 10px; height: 10px; border-radius: 50%; }
+    .cli-body {
+      padding: 24px;
+      font-size: 13.5px;
+      line-height: 1.7;
+      color: #e5e7eb;
+      overflow-x: auto;
+    }
+    .cli-prompt { color: var(--cyan); user-select: none; }
+    .cli-comm { color: #6b7280; }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border-card);
+      padding: 50px 0;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bg-grid"></div>
+
+  <!-- Glass Navbar -->
+  <header>
+    <div class="nav-container">
+      <div class="logo-group">
+        <span class="logo-badge">☸️ EKS</span>
+        <span>Ephemeral Cloud</span>
+      </div>
+      <ul class="nav-menu">
+        <li><a href="#architecture">Architecture</a></li>
+        <li><a href="#simulation">Live Traffic Simulator</a></li>
+        <li><a href="#economics">FinOps Economics</a></li>
+        <li><a href="#playbook">CLI Playbook</a></li>
+      </ul>
+      <div class="cluster-status-pill">
+        <span class="pulsing-circle"></span>
+        <span>EKS Cluster Verified</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="wrapper">
+    <!-- Hero Section -->
+    <section class="hero-section">
+      <div class="hero-eyebrow">
+        <span>⚡ Production Kubernetes • Zero Recurring Waste</span>
+      </div>
+      <h1 class="hero-title">
+        Ephemeral Microservices<br>
+        <span class="neon-text">AWS EKS & Terraform Architecture</span>
+      </h1>
+      <p class="hero-desc">
+        A battle-tested cloud-native infrastructure engineered for high availability, multi-AZ resilience, and automated lifecycle destruction to achieve a 99.8% reduction in cloud operational waste.
+      </p>
+      <div class="hero-cta">
+        <a href="#simulation" class="btn btn-glow">
+          <span>🎮 Launch Traffic Simulator</span>
+        </a>
+        <a href="#architecture" class="btn btn-glass">
+          <span>🏛️ Inspect Architecture Topology</span>
+        </a>
+      </div>
+    </section>
+
+    <!-- Key Metrics Grid -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-number">99.8%</div>
+        <div class="stat-title">Cloud Spend Saved</div>
+        <div class="stat-sub">Ephemeral on-demand teardown lifecycle</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">2 Replicas</div>
+        <div class="stat-title">High Availability</div>
+        <div class="stat-sub">Zero downtime rolling updates across AZs</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">1x NAT GW</div>
+        <div class="stat-title">Cost-Optimized Egress</div>
+        <div class="stat-sub">50% savings on standard AWS VPC NAT fees</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">100% IaC</div>
+        <div class="stat-title">Terraform Automated</div>
+        <div class="stat-sub">Zero manual AWS console clicks required</div>
+      </div>
+    </div>
+
+    <!-- Section 1: Architecture Topology -->
+    <div class="showcase-block" id="architecture">
+      <div class="block-header">
+        <span class="block-tag">Interactive Topology</span>
+        <h2 class="block-title">AWS Multi-AZ Cloud Architecture</h2>
+        <p class="block-desc">Click on any infrastructure layer to inspect VPC subnets, security policies, and resource configurations.</p>
+      </div>
+
+      <div class="arch-canvas">
+        <!-- Layer 1: Client -->
+        <div class="arch-layer">
+          <div class="arch-node" onclick="inspect('client')">
+            <div class="arch-node-header">🌐 Internet Clients</div>
+            <div class="arch-node-meta">Port 80 HTTP Ingress</div>
+          </div>
+        </div>
+
+        <div class="arrow-flow">▼</div>
+
+        <!-- Layer 2: Load Balancer -->
+        <div class="arch-layer">
+          <div class="arch-node active-node" id="node-elb" onclick="inspect('elb')">
+            <div class="arch-node-header">⚖️ AWS Elastic Load Balancer</div>
+            <div class="arch-node-meta">Public Subnet • Round-Robin Routing</div>
+          </div>
+        </div>
+
+        <div class="arrow-flow">▼</div>
+
+        <!-- Layer 3: EKS & VPC Infrastructure -->
+        <div class="arch-layer">
+          <div class="arch-node" id="node-eks" onclick="inspect('eks')">
+            <div class="arch-node-header">☸️ EKS Control Plane (v1.30)</div>
+            <div class="arch-node-meta">Master Node • Multi-AZ API Server</div>
+          </div>
+          <div class="arch-node" id="node-ec2" onclick="inspect('ec2')">
+            <div class="arch-node-header">🖥️ Managed Node Group</div>
+            <div class="arch-node-meta">2x t3.small EC2 Instances</div>
+          </div>
+          <div class="arch-node" id="node-nat" onclick="inspect('nat')">
+            <div class="arch-node-header">🛡️ Single NAT Gateway</div>
+            <div class="arch-node-meta">Public Subnet • Egress Only</div>
+          </div>
+        </div>
+
+        <div class="arrow-flow">▼</div>
+
+        <!-- Layer 4: Microservice Pods -->
+        <div class="arch-layer">
+          <div class="arch-node" id="node-pod1" onclick="inspect('pod1')">
+            <div class="arch-node-header">📦 Pod A (us-east-1a)</div>
+            <div class="arch-node-meta">Node.js REST API • Port 3000</div>
+          </div>
+          <div class="arch-node" id="node-pod2" onclick="inspect('pod2')">
+            <div class="arch-node-header">📦 Pod B (us-east-1b)</div>
+            <div class="arch-node-meta">Node.js REST API • Port 3000</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dynamic Inspector Output -->
+      <div class="inspector-panel" id="inspectorBox">
+        <div class="inspector-badge" id="inspTag">AWS::ELB</div>
+        <div class="inspector-info">
+          <h4 id="inspHead">AWS Elastic Load Balancer (Classic / NLB)</h4>
+          <p id="inspBody">
+            Automatically attached to public subnets via Kubernetes Service type <code>LoadBalancer</code>. Evenly routes incoming HTTP traffic across healthy worker nodes using keep-alive connection pooling.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2: Live Simulator -->
+    <div class="showcase-block" id="simulation">
+      <div class="block-header">
+        <span class="block-tag">Live Demonstration</span>
+        <h2 class="block-title">Round-Robin Traffic Simulator</h2>
+        <p class="block-desc">Simulate requests hitting the AWS Load Balancer and watch Kubernetes distribute load across your 2 pods in real-time.</p>
+      </div>
+
+      <div class="sim-grid">
+        <div>
+          <p style="color: var(--text-muted); font-size: 15px; margin-bottom: 20px;">
+            In Kubernetes, `kube-proxy` configures Linux IP tables on each worker node to achieve deterministic round-robin traffic distribution across all active endpoints.
+          </p>
+          <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+            <button class="btn btn-glow" onclick="dispatch(1)">⚡ Send 1 Request</button>
+            <button class="btn btn-glass" onclick="dispatch(10)">🚀 Blast 10 Requests</button>
+            <button class="btn btn-glass" onclick="resetSimCounters()" style="color: var(--rose);">Reset</button>
+          </div>
+        </div>
+
+        <div class="sim-arena">
+          <div class="sim-pods-container">
+            <div class="sim-pod-card" id="podBoxA">
+              <div class="sim-pod-id">Pod-A (Replica 1)</div>
+              <div class="sim-counter" id="numA">0</div>
+              <div style="font-size: 12px; color: var(--emerald); font-weight: 600;">● HEALTHY (200 OK)</div>
+            </div>
+            <div class="sim-pod-card" id="podBoxB">
+              <div class="sim-pod-id">Pod-B (Replica 2)</div>
+              <div class="sim-counter" id="numB">0</div>
+              <div style="font-size: 12px; color: var(--emerald); font-weight: 600;">● HEALTHY (200 OK)</div>
+            </div>
+          </div>
+          <div class="sim-terminal-log" id="termLogs">
+            [System Ready] Click "Send 1 Request" to observe real-time load distribution...
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 3: FinOps Calculator -->
+    <div class="showcase-block" id="economics">
+      <div class="block-header">
+        <span class="block-tag">Cloud Economics</span>
+        <h2 class="block-title">Ephemeral FinOps Cost Calculator</h2>
+        <p class="block-desc">Compare the micro-cost of this ephemeral demo architecture against a traditional 24/7 idle cluster.</p>
+      </div>
+
+      <div>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-size: 15px; font-weight: 600;">Active Cluster Uptime:</span>
+          <span style="font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 700; color: var(--cyan);" id="calcTimeDisplay">0.5 Hours (30 mins)</span>
+        </div>
+        <input type="range" class="calc-slider" id="timeRange" min="0.5" max="720" step="0.5" value="0.5" oninput="calculateSpend()">
+
+        <div class="calc-matrix">
+          <div class="calc-card">
+            <div style="font-size: 14px; color: var(--text-muted);">Ephemeral Demo Spend</div>
+            <div class="calc-amount" style="color: var(--emerald);" id="ephemeralCostDisplay">$0.11 (~₹9.50)</div>
+            <div style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Spun up, verified, recorded & cleanly deleted.</div>
+          </div>
+          <div class="calc-card highlight-savings">
+            <div style="font-size: 14px; color: var(--emerald); font-weight: 700;">Total Money Saved</div>
+            <div class="calc-amount" style="color: var(--cyan);" id="savingsCostDisplay">$164.20 (~₹13,950)</div>
+            <div style="font-size: 13px; color: var(--emerald); margin-top: 4px;">Compared to standard 720-hour monthly idle billing.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 4: CLI Playbook -->
+    <div class="showcase-block" id="playbook">
+      <div class="block-header">
+        <span class="block-tag">Automation Blueprint</span>
+        <h2 class="block-title">Terminal Execution Playbook</h2>
+        <p class="block-desc">Reproduce this exact cloud deployment with pure Infrastructure as Code.</p>
+      </div>
+
+      <div class="cli-box">
+        <div class="cli-top">
+          <div class="dots">
+            <span class="dot-item" style="background: #ef4444;"></span>
+            <span class="dot-item" style="background: #eab308;"></span>
+            <span class="dot-item" style="background: #22c55e;"></span>
+          </div>
+          <span style="font-size: 12px; color: #9ca3af;">PowerShell / Bash Automation</span>
+        </div>
+        <div class="cli-body">
+<span class="cli-comm"># 1. Provision Multi-AZ VPC and EKS Cluster</span>
+<span class="cli-prompt">></span> terraform -chdir="terraform" apply -auto-approve
+
+<span class="cli-comm"># 2. Update local kubeconfig context</span>
+<span class="cli-prompt">></span> aws eks --region us-east-1 update-kubeconfig --name ephemeral-eks-cluster
+
+<span class="cli-comm"># 3. Deploy Microservice Replicas & AWS LoadBalancer</span>
+<span class="cli-prompt">></span> kubectl apply -f k8s/deployment.yaml
+<span class="cli-prompt">></span> kubectl apply -f k8s/service.yaml
+
+<span class="cli-comm"># 4. Fetch Live Public DNS URL</span>
+<span class="cli-prompt">></span> kubectl get svc ephemeral-api-service
+
+<span class="cli-comm"># 🚨 5. Automated Teardown (Deletes K8s ELBs first, then destroys VPC)</span>
+<span class="cli-prompt">></span> .\scripts\destroy-aws.ps1
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="wrapper">
+      <p style="font-weight: 700; color: var(--text-main); font-size: 16px;">J Mohan Abhishek • Cloud & DevOps Engineer</p>
+      <p style="margin-top: 6px;">Ephemeral EKS Microservices Architecture • AWS & Terraform</p>
+    </div>
+  </footer>
+
+  <script>
+    // 1. Architecture Details Dictionary
+    const specs = {
+      client: {
+        tag: "NETWORK::CLIENT",
+        head: "Public Internet Ingress",
+        body: "External user traffic requesting port 80. Distributed globally with low latency via AWS Route53 DNS resolution."
+      },
+      elb: {
+        tag: "AWS::ELB",
+        head: "AWS Elastic Load Balancer (ELB)",
+        body: "Attached to public subnets via Kubernetes Service type LoadBalancer. Evenly routes incoming HTTP traffic across healthy worker nodes."
+      },
+      eks: {
+        tag: "AWS::EKS::CLUSTER",
+        head: "Amazon EKS Control Plane (Kubernetes v1.30)",
+        body: "High-availability AWS managed master nodes overseeing etcd consensus, controller managers, and API server security."
+      },
+      ec2: {
+        tag: "AWS::EKS::NODEGROUP",
+        head: "Managed Node Group (2x t3.small EC2)",
+        body: "Worker nodes located inside private subnets running Amazon Linux 2023, containerd runtime, and AWS VPC CNI."
+      },
+      nat: {
+        tag: "AWS::VPC::NATGATEWAY",
+        head: "Cost-Optimized Single NAT Gateway",
+        body: "Enables private EC2 worker nodes to securely pull container images and updates from public repositories without exposing them to direct inbound internet traffic."
+      },
+      pod1: {
+        tag: "K8S::POD_A",
+        head: "Microservice Replica A (us-east-1a)",
+        body: "Runs containerized Node.js REST API with Liveness & Readiness health probes. Configured with 100m CPU / 128Mi RAM resource constraints."
+      },
+      pod2: {
+        tag: "K8S::POD_B",
+        head: "Microservice Replica B (us-east-1b)",
+        body: "Ensures fault tolerance across Availability Zones. If Pod A crashes or undergoes rolling deployment, Pod B handles all traffic seamlessly."
+      }
+    };
+
+    function inspect(key) {
+      const data = specs[key];
+      if (!data) return;
+
+      document.querySelectorAll('.arch-node').forEach(el => el.classList.remove('active-node'));
+      const active = document.getElementById('node-' + key);
+      if (active) active.classList.add('active-node');
+
+      document.getElementById('inspTag').innerText = data.tag;
+      document.getElementById('inspHead').innerText = data.head;
+      document.getElementById('inspBody').innerHTML = data.body;
+    }
+
+    // 2. Traffic Simulator
+    let cntA = 0;
+    let cntB = 0;
+    let turn = 'A';
+
+    function dispatch(qty) {
+      const log = document.getElementById('termLogs');
+      for (let i = 0; i < qty; i++) {
+        if (turn === 'A') {
+          cntA++;
+          document.getElementById('numA').innerText = cntA;
+          flash('podBoxA');
+          turn = 'B';
+          log.innerHTML = `[${new Date().toLocaleTimeString()}] GET / ➔ Routed to Pod-A (200 OK • 12ms)<br>` + log.innerHTML;
+        } else {
+          cntB++;
+          document.getElementById('numB').innerText = cntB;
+          flash('podBoxB');
+          turn = 'A';
+          log.innerHTML = `[${new Date().toLocaleTimeString()}] GET / ➔ Routed to Pod-B (200 OK • 14ms)<br>` + log.innerHTML;
+        }
+      }
+    }
+
+    function flash(id) {
+      const el = document.getElementById(id);
+      el.classList.add('flash-active');
+      setTimeout(() => el.classList.remove('flash-active'), 250);
+    }
+
+    function resetSimCounters() {
+      cntA = 0; cntB = 0;
+      document.getElementById('numA').innerText = '0';
+      document.getElementById('numB').innerText = '0';
+      document.getElementById('termLogs').innerText = '[System Reset] Ready for traffic simulation...';
+    }
+
+    // 3. Economics Calculator
+    function calculateSpend() {
+      const hrs = parseFloat(document.getElementById('timeRange').value);
+      const disp = document.getElementById('calcTimeDisplay');
+      disp.innerText = hrs < 1 ? `${hrs * 60} Minutes` : `${hrs} Hours`;
+
+      const hourlyRate = 0.2282; // EKS + 2x t3.small + NAT GW
+      const demoSpend = (hrs * hourlyRate).toFixed(2);
+      const monthlySpend = (720 * hourlyRate).toFixed(2);
+      const saved = (monthlySpend - demoSpend).toFixed(2);
+
+      const inrRate = 85.0;
+      const inrDemo = Math.round(demoSpend * inrRate);
+      const inrSaved = Math.round(saved * inrRate).toLocaleString('en-IN');
+
+      document.getElementById('ephemeralCostDisplay').innerText = `$${demoSpend} (~₹${inrDemo})`;
+      document.getElementById('savingsCostDisplay').innerText = `$${saved} (~₹${inrSaved})`;
+    }
+  </script>
+</body>
+</html>
