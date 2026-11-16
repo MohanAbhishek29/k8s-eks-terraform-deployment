@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<title>Beat the bill: a game about cloud cost</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
+<style>
+:root{--cream:#fbf3e2;--paper:#fffaf0;--orange:#ff9900;--deep:#b85f00;--ink:#2b1c08;--line:#e6d6b4;
+ box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*,*::before,*::after{box-sizing:inherit;border-radius:0}
+html{height:100%}
+body{margin:0;background:var(--cream);color:var(--ink);font-family:'Archivo','Helvetica Neue',Arial,sans-serif;font-size:18px;line-height:1.5}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--cream);z-index:20}
+h1,h2,p{margin:0}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+.wrap{max-width:1180px;margin:0 auto;padding:0 clamp(20px,5vw,56px)}
+.hud{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;background:var(--cream);border-bottom:3px solid var(--ink);display:flex;justify-content:space-between;gap:16px;padding:10px clamp(20px,5vw,56px);font-weight:800;font-stretch:75%;font-size:clamp(1rem,2.6vw,1.4rem);font-variant-numeric:tabular-nums}
+.hud #bill{background:var(--orange);padding:0 10px}
+.hud #bill.hit{background:var(--ink);color:var(--cream)}
+h1{font-stretch:62%;font-weight:900;font-size:clamp(3.6rem,14vw,11rem);line-height:.86;text-wrap:balance}
+h2{font-stretch:62%;font-weight:900;font-size:clamp(2rem,5vw,3.6rem);line-height:.95;margin-bottom:12px}
+.hero{padding:clamp(28px,6vw,72px) 0 clamp(24px,4vw,44px)}
+.lede{margin-top:clamp(16px,2.4vw,28px);max-width:38em;font-size:clamp(1.05rem,1.6vw,1.25rem)}
+.game{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:clamp(24px,5vw,72px);align-items:start;padding:clamp(28px,5vw,56px) 0 clamp(48px,8vw,96px);border-top:3px solid var(--ink)}
+.stack{position:sticky;top:calc(env(safe-area-inset-top,0px) + 64px)}
+.slot{height:clamp(46px,7vw,64px);margin:0 0 8px;display:flex;align-items:center;padding:0 16px;border:2px dashed rgba(43,28,8,.35);font-stretch:75%;font-weight:800;font-size:clamp(1.1rem,2.4vw,1.5rem);overflow:hidden;white-space:nowrap;transition:height .35s,margin .35s,opacity .35s,padding .35s}
+.slot.on{background:var(--orange);border:2px solid var(--ink)}
+.slot.gone{height:0;margin:0;opacity:0;padding:0;border-width:0}
+.stack .base{height:5px;background:var(--ink)}
+.panel p.how{max-width:34em}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:16px 18px;margin-top:22px}
+.tile{font:inherit;text-align:left;padding:14px 16px;border:3px solid var(--ink);background:var(--paper);color:var(--ink);cursor:pointer;box-shadow:6px 6px 0 var(--orange);min-height:72px}
+.tile b{display:block;font-stretch:75%;font-weight:800;font-size:1.25rem;line-height:1.1}
+.tile span{display:block;font-size:.9rem;color:var(--deep);font-weight:600;margin-top:3px}
+.tile:not([disabled]):hover{background:var(--orange)}
+.tile:not([disabled]):hover span{color:var(--ink)}
+.tile[disabled]{background:var(--ink);color:var(--cream);box-shadow:none;cursor:default}
+.tile[disabled] span{color:var(--line)}
+.tile.shake{animation:sh .3s}
+@keyframes sh{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.tiles.one{grid-template-columns:1fr}
+.msg{margin-top:22px;padding:12px 16px;font-weight:700;background:var(--orange);display:none}
+.msg.on{display:block}
+.btn{font:inherit;font-weight:700;padding:14px 22px;border:3px solid var(--ink);background:var(--ink);color:var(--cream);cursor:pointer;min-height:48px;margin-top:22px}
+.btn:hover{background:var(--orange);color:var(--ink)}
+.btn[disabled]{opacity:.35;cursor:not-allowed}
+.pods{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:22px}
+.pod{padding:16px;border:3px solid var(--ink);background:var(--paper);box-shadow:6px 6px 0 var(--orange)}
+.pod b{display:block;font-stretch:75%;font-weight:800;font-size:1.5rem}
+.pod .z{font-size:.9rem;color:var(--deep);font-weight:600}
+.pod .s{display:block;margin-top:10px;font-weight:700}
+.pod.down{background:var(--ink);color:var(--cream);box-shadow:none}
+.pod.down .z{color:var(--line)}
+.score{font-stretch:62%;font-weight:900;font-size:clamp(4rem,14vw,9rem);line-height:.9}
+.cmp{margin-top:20px}
+.cmp div.b{height:44px}
+.cmp p{margin:8px 0 18px;font-weight:700}
+footer{background:var(--orange);border-top:3px solid var(--ink);padding:clamp(28px,5vw,56px) 0}
+footer a{display:block;font-stretch:62%;font-weight:900;font-size:clamp(1.6rem,5.6vw,4.4rem);line-height:.95;text-decoration:none;overflow-wrap:anywhere}
+footer a:hover{text-decoration:underline;text-decoration-thickness:.07em;text-underline-offset:.08em}
+footer p{margin-top:12px;font-weight:600;font-size:.95rem}
+@media(max-width:860px){.game{grid-template-columns:1fr}.stack{position:static}}
+@media(max-width:520px){.tiles,.pods{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){.slot{transition:none}.tile.shake{animation:none}}
+</style>
+</head>
+<body>
+<div class="hud"><span id="lvl">Ready</span><span id="clk">00:00 alive</span><span id="bill">$0.000</span></div>
+<main class="wrap">
+  <header class="hero">
+    <h1>Beat the bill.</h1>
+    <p class="lede">A cloud cluster costs money every minute it exists. Build one, serve some visitors, then tear it down. The meter runs the whole time: one second here is one minute on AWS. Left on for a month, a cluster like this costs $164.20. The real run cost $0.18. Can you match it?</p>
+  </header>
+  <div class="game">
+    <div class="stack" id="stack" aria-label="Your cluster, built from the bottom up"></div>
+    <div class="panel" id="panel"></div>
+  </div>
+</main>
+<footer><div class="wrap">
+  <a href="https://github.com/mohanabhishek29/k8s-eks-terraform-deployment">k8s-eks-terraform-deployment</a>
+  <p>A simulation. Prices are the estimates from the project README, about $0.23 an hour for the whole stack.</p>
+</div></footer>
+
+<script>
+(function(){
+var $=function(i){return document.getElementById(i)};
+var L=[
+ {n:'Network',s:'VPC, subnets, one NAT gateway'},
+ {n:'Control plane',s:'the Kubernetes brain (EKS)',why:'The cluster has to live somewhere. Build the network first.'},
+ {n:'Worker nodes',s:'the servers that run your app',why:'Worker nodes join a control plane, and there is not one yet.'},
+ {n:'Your app',s:'2 copies, called pods',why:'Pods need worker nodes to run on.'},
+ {n:'Load balancer',s:'the public front door',why:'The load balancer needs pods to send visitors to.'}
+];
+var st,panel=$('panel');
+function pad(n){return n<10?'0'+n:''+n}
+function hud(){
+  $('clk').textContent=pad(Math.floor(st.min/60))+':'+pad(st.min%60)+' alive';
+  $('bill').textContent='$'+(st.min/60*0.23).toFixed(3);
+}
+function setLvl(t){$('lvl').textContent=t}
+function pen(m){
+  st.min+=m;st.mis++;hud();
+  var b=$('bill');b.className='hit';setTimeout(function(){b.className=''},350);
+}
+function msg(t){var m=$('msg');if(!m)return;m.textContent=t;m.className='msg on'}
+function stack(){
+  $('stack').innerHTML=L.slice().reverse().map(function(x,k){
+    var i=4-k;
+    return '<div class="slot'+(st.built[i]?' on':'')+(st.gone[i]?' gone':'')+'">'+(st.built[i]?x.n:'')+'</div>';
+  }).join('')+'<div class="base"></div>';
+}
+function shuffle(a){
+  a=a.slice();
+  for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}
+  return a;
+}
+function intro(){
+  clearInterval(st&&st.t);
+  st={min:0,mis:0,step:0,built:[0,0,0,0,0],gone:[0,0,0,0,0],t:null};
+  hud();setLvl('Ready');stack();
+  panel.innerHTML='<h2>Your mission</h2><p class="how">Three levels. Build the cluster in the right order, serve six visitors, then destroy everything without breaking anything. Wrong moves cost minutes, and minutes cost money.</p><button class="btn" id="go" type="button">terraform apply</button>';
+  $('go').onclick=lvl1;
+}
+function lvl1(){
+  st.t=setInterval(function(){st.min++;hud()},1000);
+  setLvl('Level 1 of 3: Build');
+  var order=shuffle([0,1,2,3,4]);
+  panel.innerHTML='<h2>Build it in order</h2><p class="how">Tap the next piece to add. Each piece needs the one below it. A wrong tap costs 3 minutes.</p><div class="tiles" id="tiles"></div><p class="msg" id="msg" aria-live="polite"></p>';
+  $('tiles').innerHTML=order.map(function(i){return '<button class="tile" type="button" data-i="'+i+'"><b>'+L[i].n+'</b><span>'+L[i].s+'</span></button>'}).join('');
+  [].slice.call(document.querySelectorAll('.tile')).forEach(function(b){
+    b.onclick=function(){
+      var i=+b.getAttribute('data-i');
+      if(i===st.step){
+        st.built[i]=1;st.step++;b.disabled=true;stack();
+        msg(st.step<5?'Good. '+L[st.step-1].n+' is up.':'All five pieces are up. Opening the doors.');
+        if(st.step===5)setTimeout(lvl2,1100);
+      }else{
+        pen(3);msg(L[i].why+' (+3 minutes)');
+        b.classList.remove('shake');void b.offsetWidth;b.classList.add('shake');
+      }
+    };
+  });
+}
+function lvl2(){
+  setLvl('Level 2 of 3: Serve');
+  var n=0,last=-1,crashed=-1,served=[0,0];
+  panel.innerHTML='<h2>Serve six visitors</h2><p class="how">Send visitors to your public address and see which pod answers. Something may go wrong along the way.</p><div class="pods"><div class="pod" id="p0"><b>Pod 1</b><span class="z">zone us-east-1a</span><span class="s" id="s0">Running, 0 served</span></div><div class="pod" id="p1"><b>Pod 2</b><span class="z">zone us-east-1b</span><span class="s" id="s1">Running, 0 served</span></div></div><button class="btn" id="send" type="button">Send a visitor</button><p class="msg" id="msg" aria-live="polite"></p>';
+  function paint(){
+    [0,1].forEach(function(p){
+      $('p'+p).className='pod'+(crashed===p?' down':'');
+      $('s'+p).textContent=(crashed===p?'Crashed, ':'Running, ')+served[p]+' served';
+    });
+  }
+  $('send').onclick=function(){
+    n++;var note='';
+    if(n===3){crashed=0;note='Simulated crash: Pod 1 just went down. '}
+    if(n===6){crashed=-1;note='Kubernetes restarted Pod 1. '}
+    var healthy=[0,1].filter(function(x){return x!==crashed});
+    var p=healthy.filter(function(x){return x!==last})[0];
+    if(p===undefined)p=healthy[0];
+    last=p;served[p]++;paint();
+    msg(note+'Visitor '+n+' was answered by Pod '+(p+1)+'.');
+    if(n===6){
+      $('send').remove();
+      msg('Six visitors served, none dropped. Two copies kept the site up even while one was down.');
+      var b=document.createElement('button');b.className='btn';b.type='button';b.textContent='Next: tear it down';b.onclick=lvl3;panel.appendChild(b);
+    }
+  };
+}
+function lvl3(){
+  setLvl('Level 3 of 3: Destroy');
+  var T=[
+   {n:'Delete the Kubernetes service',s:'so AWS removes the load balancer'},
+   {n:'Wait 60 seconds',s:'for network interfaces to detach'},
+   {n:'terraform destroy',s:'removes nodes, cluster, NAT, VPC'},
+   {n:'Delete the image registry',s:'the ECR repository'}
+  ];
+  var d=0,order=shuffle([0,1,2,3]);
+  panel.innerHTML='<h2>Destroy it, safely</h2><p class="how">The meter is still running. Tap the four steps in the right order. Some wrong taps are expensive.</p><div class="tiles one" id="tiles"></div><p class="msg" id="msg" aria-live="polite"></p>';
+  $('tiles').innerHTML=order.map(function(i){return '<button class="tile" type="button" data-i="'+i+'"><b>'+T[i].n+'</b><span>'+T[i].s+'</span></button>'}).join('');
+  var tiles=[].slice.call(document.querySelectorAll('.tile'));
+  tiles.forEach(function(b){
+    b.onclick=function(){
+      var j=+b.getAttribute('data-i');
+      if(j!==d){
+        var t,p=3;
+        if(j===2&&d===0){t='Blocked. The load balancer still holds the subnets, so destroy fails and the meter keeps running.';p=10}
+        else if(j===2){t='Blocked. The load balancer’s network interfaces are still detaching. Give AWS 60 seconds first.';p=5}
+        else if(j===1){t='Nothing is detaching yet. Delete the service first.'}
+        else{t='The registry is not what costs money. Destroy the cluster first.'}
+        pen(p);msg(t+' (+'+p+' minutes)');
+        b.classList.remove('shake');void b.offsetWidth;b.classList.add('shake');
+        return;
+      }
+      b.disabled=true;d++;
+      if(j===0){st.gone[4]=1;stack();msg('Service deleted. AWS is removing the load balancer.')}
+      if(j===1){
+        msg('Waiting 60 seconds (one second here)...');
+        tiles.forEach(function(x){x.dataset.was=x.disabled?1:0;x.disabled=true});
+        setTimeout(function(){tiles.forEach(function(x){x.disabled=x.dataset.was==='1'});msg('60 seconds passed. Now it is safe to destroy.')},1000);
+      }
+      if(j===2){
+        clearInterval(st.t);
+        [3,2,1,0].forEach(function(k,idx){setTimeout(function(){st.gone[k]=1;stack()},idx*260)});
+        msg('Everything is gone. Billing stops now. One cleanup step left.');
+      }
+      if(j===3){msg('Registry deleted. Zero resources left.');setTimeout(end,1100)}
+    };
+  });
+}
+function end(){
+  setLvl('Finished');
+  var b=st.min/60*0.23;
+  var rank=b<=0.18?'Cleaner than the real run':b<=0.30?'Ephemeral engineer':'That cluster ran too long';
+  var pct=Math.max(0,b/164.2*100);
+  panel.innerHTML='<h2>'+rank+'</h2><div class="score">$'+b.toFixed(2)+'</div><p class="how">Your cluster lived for '+st.min+' minutes and you made '+st.mis+(st.mis===1?' mistake':' mistakes')+'. The real project run cost $0.18.</p><div class="cmp"><div class="b" style="background:var(--orange)"></div><p>$164.20 if it stayed on for a month</p><div class="b" style="background:var(--ink);width:max(3px,'+pct.toFixed(3)+'%)"></div><p>$'+b.toFixed(2)+' your run, drawn to scale</p></div><button class="btn" id="again" type="button">Play again</button>';
+  $('again').onclick=intro;
+}
+intro();
+})();
+</script>
+</body>
+</html>

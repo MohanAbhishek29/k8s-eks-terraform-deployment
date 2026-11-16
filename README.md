@@ -14,11 +14,15 @@ A production-grade, highly cost-optimized, and **ephemeral** microservices deplo
 > 📖 **Comprehensive Project Architecture & Technical Whitepaper**:  
 > Explore the live architectural documentation website: [**Project Architecture Showcase**](https://mohanabhishek29.github.io/k8s-eks-terraform-deployment/) to understand what this project is—from multi-AZ VPC design, container security, and FinOps cost analysis ($0.18 vs $164.20/mo) to the deterministic teardown protocol and full-resolution AWS console proof gallery!
 
-### ⚡ 2. Live Interactive Microservice Experience (Web UI)
+### 🎮 2. "Beat the Bill" – The Ephemeral Cloud Game
+> 🕹️ **Interactive DevOps Dependency & Teardown Game**:  
+> Play the live browser game: [**Beat the Bill Game**](https://mohanabhishek29.github.io/k8s-eks-terraform-deployment/game.html)! Build the EKS stack in the right order (Level 1: Build), survive a pod crash across 2 multi-AZ replicas (Level 2: Serve), and execute the exact teardown sequence without triggering the dreaded AWS LoadBalancer ENI subnet lock penalty (Level 3: Destroy). Can you beat the real \$0.18 run benchmark?
+
+### ⚡ 3. Live Interactive Microservice Experience (Web UI)
 > 🚀 **Hands-on Live Microservice Experience**:  
 > Launch the interactive web application interface: [**Live Microservice App Demo**](https://mohanabhishek29.github.io/k8s-eks-terraform-deployment/demo.html) to experience the live task manager UI with real-time Kubernetes pod load-balancing, pod hostname rotation, live health probes (`/health`), and interactive task CRUD operations!
 
-### 📄 3. Official Architecture & Verification Report (PDF)
+### 📄 4. Official Architecture & Verification Report (PDF)
 > 📥 **Download Full Engineering Report**:  
 > View the complete 19-screenshot AWS console verification catalog and architectural proof: [**Project Official Document.pdf**](Project%20Official%20Document.pdf)
 
