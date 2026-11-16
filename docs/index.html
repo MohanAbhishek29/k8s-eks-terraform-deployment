@@ -56,6 +56,21 @@ code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.9em;background
 .strip .bar{flex:1;height:10px;background:var(--line);border:1px solid var(--ink)}
 .strip .bar i{display:block;height:100%;width:0;background:var(--orange);transition:width .15s ease-out}
 .strip .sp{min-width:4.5em;text-align:right;font-variant-numeric:tabular-nums}
+.strip .demo-link{
+  margin-left:auto;
+  font-size:0.85rem;
+  padding:4px 10px;
+  background:var(--ink);
+  color:var(--cream);
+  text-decoration:none;
+  font-weight:700;
+  border:2px solid var(--ink);
+  transition:all 0.15s ease;
+}
+.strip .demo-link:hover{
+  background:var(--orange);
+  color:var(--ink);
+}
 
 /* Hero Section */
 .hero{padding:clamp(40px,7vw,96px) 0 clamp(32px,5vw,64px)}
@@ -113,7 +128,7 @@ h1{
   font-variant-numeric:tabular-nums;
 }
 .cap{font-size:.92rem;color:var(--deep);font-weight:600;margin-top:4px}
-.controls{display:flex;gap:12px;flex-wrap:wrap}
+.controls{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
 .ctl{
   font:inherit;
   font-weight:700;
@@ -125,6 +140,9 @@ h1{
   min-height:48px;
   box-shadow:4px 4px 0 var(--ink);
   transition:transform .1s ease, box-shadow .1s ease, background .15s ease;
+  display:inline-flex;
+  align-items:center;
+  text-decoration:none;
 }
 .ctl:hover:not([disabled]){
   background:var(--orange);
@@ -285,6 +303,7 @@ figcaption{
   .readout{flex-direction:column;align-items:flex-start;gap:20px}
   .zeros{grid-template-columns:1fr;gap:24px}
   .strip .st{display:none}
+  .strip .demo-link{margin-left:0}
 }
 
 /* Footer */
@@ -336,6 +355,7 @@ dialog .ctl{display:block;width:100%;border-width:0;border-top:3px solid var(--i
   <span class="st" id="stage">Start</span>
   <span class="bar"><i id="fill"></i></span>
   <span class="sp" id="spent">$0.00</span>
+  <a href="demo.html" class="demo-link" target="_blank">⚡ Live App Demo ➔</a>
 </div>
 
 <main>
@@ -357,6 +377,7 @@ dialog .ctl{display:block;width:100%;border-width:0;border-top:3px solid var(--i
       <div class="controls">
         <button class="ctl" id="apply" disabled>terraform apply</button>
         <button class="ctl go" id="destroy">terraform destroy</button>
+        <a href="demo.html" class="ctl" style="background:var(--paper);color:var(--ink);" target="_blank">⚡ Live App Demo</a>
       </div>
     </div>
     <p class="status" id="status" aria-live="polite">The cluster is active on AWS and the meter is ticking.</p>
@@ -455,6 +476,9 @@ dialog .ctl{display:block;width:100%;border-width:0;border-top:3px solid var(--i
     <div class="txt">
       <h2>Elastic Load Balancing & Verification</h2>
       <p>An AWS Classic Load Balancer is dynamically provisioned via the Kubernetes cloud controller manager. It routes public Internet traffic on port 80 to NodePort 30514, load balancing across both worker nodes. Traffic round-robins across distinct pod hostnames, verified live with task CRUD operations.</p>
+      <div style="margin:20px 0 10px;">
+        <a href="demo.html" class="ctl go" style="font-size:0.95rem;padding:10px 18px;" target="_blank">⚡ Launch Live Interactive Demo ➔</a>
+      </div>
       <dl class="facts">
         <div><dt>2 of 2</dt><dd>worker instances verified InService behind the ELB</dd></div>
         <div><dt>Port 80</dt><dd>public ingress forwarding traffic to NodePort 30514</dd></div>
@@ -501,8 +525,9 @@ dialog .ctl{display:block;width:100%;border-width:0;border-top:3px solid var(--i
   <div class="wrap">
     <a href="https://github.com/mohanabhishek29/k8s-eks-terraform-deployment" class="repo-link">k8s-eks-terraform-deployment</a>
     <div style="display:flex;gap:14px;flex-wrap:wrap;margin:24px 0 16px;">
-      <a href="https://github.com/MohanAbhishek29/k8s-eks-terraform-deployment/blob/main/Project%20Official%20Document.pdf" class="ctl go" style="text-decoration:none;font-size:1rem;display:inline-flex;align-items:center;" target="_blank">📄 Download Official Project Document (PDF)</a>
-      <a href="https://github.com/mohanabhishek29/k8s-eks-terraform-deployment" class="ctl" style="text-decoration:none;font-size:1rem;display:inline-flex;align-items:center;background:var(--paper);" target="_blank">⭐ Star on GitHub</a>
+      <a href="demo.html" class="ctl" style="font-size:1rem;background:var(--paper);color:var(--ink);" target="_blank">⚡ Live Interactive Demo</a>
+      <a href="https://github.com/MohanAbhishek29/k8s-eks-terraform-deployment/blob/main/Project%20Official%20Document.pdf" class="ctl go" style="font-size:1rem;" target="_blank">📄 Download Official Project Document (PDF)</a>
+      <a href="https://github.com/mohanabhishek29/k8s-eks-terraform-deployment" class="ctl" style="font-size:1rem;background:var(--paper);" target="_blank">⭐ Star on GitHub</a>
     </div>
     <p>J Mohan Abhishek, Cloud and DevOps Engineer</p>
   </div>

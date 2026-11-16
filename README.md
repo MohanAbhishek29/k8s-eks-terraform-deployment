@@ -10,13 +10,17 @@ A production-grade, highly cost-optimized, and **ephemeral** microservices deplo
 
 ---
 
-### 🌐 Live Project Showcase & Architecture Explorer
-> 🚀 **Explore the Interactive Product Showcase**:  
-> Visit the live GitHub Pages link: [**Live Architecture Explorer**](https://mohanabhishek29.github.io/k8s-eks-terraform-deployment/) to experience the **Interactive Topology Inspector**, **Real-Time Traffic Simulator**, and **Cloud Cost Calculator**!
+### 🌐 1. Live Project Architecture & FinOps Showcase
+> 📖 **Comprehensive Project Architecture & Technical Whitepaper**:  
+> Explore the live architectural documentation website: [**Project Architecture Showcase**](https://mohanabhishek29.github.io/k8s-eks-terraform-deployment/) to understand what this project is—from multi-AZ VPC design, container security, and FinOps cost analysis ($0.18 vs $164.20/mo) to the deterministic teardown protocol and full-resolution AWS console proof gallery!
 
-### 📄 Official Architecture & Verification Report
-> 📥 **Download Full Project Report**:  
-> View the complete 19-screenshot AWS verification catalog and engineering documentation: [**Project Official Document.pdf**](Project%20Official%20Document.pdf)
+### ⚡ 2. Live Interactive Microservice Experience (Web UI)
+> 🚀 **Hands-on Live Microservice Experience**:  
+> Launch the interactive web application interface: [**Live Microservice App Demo**](https://mohanabhishek29.github.io/k8s-eks-terraform-deployment/demo.html) to experience the live task manager UI with real-time Kubernetes pod load-balancing, pod hostname rotation, live health probes (`/health`), and interactive task CRUD operations!
+
+### 📄 3. Official Architecture & Verification Report (PDF)
+> 📥 **Download Full Engineering Report**:  
+> View the complete 19-screenshot AWS console verification catalog and architectural proof: [**Project Official Document.pdf**](Project%20Official%20Document.pdf)
 
 ---
 
